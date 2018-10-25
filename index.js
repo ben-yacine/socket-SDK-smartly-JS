@@ -66,7 +66,7 @@ function smartlyClass() {
         sendRequest: function (param) {
             param.user_data.sender = (this.user_id).toString();
             this.socket.emit('new_log', {
-                platform: "webchat",
+                platform: "webchat", // The platform type that manage sockets 
                 user_id: this.user_id,
                 skill_id: this.skill_id,
                 lang: this.lang,
