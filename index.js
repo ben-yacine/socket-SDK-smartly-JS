@@ -35,12 +35,11 @@ function smartlyClass() {
         this.user_id = typeof attributs.user_id !== 'undefined' ? attributs.user_id : Date.now();
         this.lang = typeof attributs.lang !== 'undefined' ? attributs.lang : "en-gb";
         this.skill_id = typeof attributs.skill_id !== 'undefined' ? (attributs.skill_id) : '';
-        this.user_data = typeof attributs.user_data !== 'undefined' ? (attributs.user_data) : {};
         socket.emit('new_user', {
             user_id: this.user_id,
             apps_id: this.skill_id,
             lang: this.lang,
-            user_data: this.user_data
+            user_data: {}
         });
     }
 
@@ -67,76 +66,52 @@ function smartlyClass() {
         /**
          * Get output from API REST.
          * @method getAnswer
-         * @param   JSON  event
+         * @param   JSON  param
          * @param   Function  callback
          * @return json
          */
         getAnswer: function (param, callback) {
-            this.user_data = param.user_data;
-            user_data.sender = (this.user_id).toString();
-
+            param.user_data.sender = (this.user_id).toString();
             this.socket.emit('new_log', {
                 platform: "webchat",
-                event_name: param.event,
                 user_id: this.user_id,
-                skill_id: param.skill_id,
+                skill_id: this.skill_id,
                 lang: this.lang,
-                user_data: user_data,
-                input: param.input,
-                client_id: param.client_id
+                event_name: param.event_name,
+                user_data: param.user_data,
+                input: param.input
             });
         }
 
     };
 }
 
+// Instantiate object from SmartlyClass
+var objSmartly = new Smartly({
+    skill_id: "5b7a9c169a99d7260bc2c18a",
+    user_id: "userIdcomposed",
+    lang: "fr-fr"
+});
 
-/**
- * Init Smartly chat by building the html of the webchat and loading the css. Also, it add listener on DOM object.
- * @method initSmartlyChat
- * @return null
- */
-function initSmartlyChat() {
+// Event for conversation module messages
+objSmartly.on('onMessage', function (message) {
+    console.log(message)
+});
 
-    // Instantiate object Smartly
-    var objSmartly = new Smartly({
-        app_id: "",
-        user_id: "",
-        user_data: {},
-        lang: "fr-fr"
-    });
+// Event for Bot answers
+objSmartly.on('new_log_' + SMARTLY_APP_ID, function (message) {
+    console.log(message);
+});
 
-    // Event for Bot's answers
-    objSmartly.on('onMessage', function (message) {
-        console.log(message)
-    });
+// Send a NEW_DIALOG_SESSION. Get the message of the welcome state
+objSmartly.getAnswer({
+    event_name: NEW_DIALOG_SESSION,
+    user_data: {},
+});
 
-    objSmartly.on('new_log_' + SMARTLY_APP_ID, function (message) {
-        smrtJQ('#smartly-chat .message.loading').remove();
-
-        buildHTML.insertSmartlyMessage(message.answer, new Date());
-        if (message.rich_text) {
-            buildHTML.insertSmartlyRichTexts(message, new Date(), false);
-        }
-        if (hasLocationQR && !ALREADY_DISPLAY_WARNING && !SUPPORT_PERM_QUERY) {
-            var warning = LOCATION_WARNING[SMARTLY_LANG];
-            buildHTML.insertSmartlyMessage(warning);
-        }
-        buildHTML.updateScrollbar();
-    });
-
-    objSmartly.getAnswer({
-        skill_id: SMARTLY_APP_ID,
-        input: '',
-        user_data: {},
-        event_name: "NEW_DIALOG_SESSION"
-    });
-
-    objSmartly.getAnswer({
-        skill_id: SMARTLY_APP_ID,
-        input: answer,
-        event_name: "NEW_INPUT",
-        user_data: {},
-        client_id: that.client_id
-    });
-}
+// Send a NEW_INPUT
+objSmartly.getAnswer({
+    event_name: NEW_INPUT,
+    input: "",
+    user_data: {}
+});
